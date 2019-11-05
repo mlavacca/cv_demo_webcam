@@ -10,11 +10,13 @@ import json
 from datetime import datetime
 from pprint import pprint
 import codecs
-from flask import Flask
+from flask import Flask, Response, render_template
+import threading as t
 
 from streamer import Streamer
+from frames import Frames_coll
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 app.secret_key = "secret_key"
 
 def args_parsing():
@@ -37,43 +39,39 @@ def args_parsing():
     if args.host:
         hostname = "http://" + args.host + ":5000"
     else:
-        hostname = "http://localhost:5000"
+        hostname = "http://localhost:5000/processframe"
 
     return input_type, input_path, hostname
 
 @app.route("/original_video_feed")
 def original_video_feed():
-    pass
 
-@app.route("/manipulated_video_feed")
-def manipulated_video_feed():
-    pass
+    return Response(
+        src_streamer.stream_src_frame(),
+        mimetype = "multipart/x-mixed-replace; boundary=frame"
+    )
+
+
+@app.route("/localhost_video_feed")
+def localhost_video_feed():
+    return Response(
+        src_streamer.stream_remote_frame(src_streamer.host),
+        mimetype = "multipart/x-mixed-replace; boundary=frame"
+    )
 
 @app.route("/", methods=['GET'])
-def index():
-    html_code = '''
-<!DOCTYPE html>
-<html>
-<body>
-
-<video width="720" height="400" controls>
-  <source src="/home/mattia/Desktop/run.mp4" type="video/mp4">
-  <source src="movie.ogg" type="video/ogg">
-  Your browser does not support the video tag.
-</video>
-
-</body>
-</html>
-'''   
-
-    return html_code, 200
+def index(): 
+    return render_template('index.html')
 
 
 if __name__ == "__main__":
     input_type, input_path, host = args_parsing()
-    #streamer = Streamer(host, input_type, input_path)
 
-    nFrame = 0
-    fps = 0
+    frames_collections = Frames_coll()
+    frames_collections.add_output_queue(host)
+
+    src_streamer = Streamer(host, input_type, input_path, frames_collections)
+    src_streamer.start_frames_getter()
+
 
     app.run(host='0.0.0.0', port=5005, debug=False)
