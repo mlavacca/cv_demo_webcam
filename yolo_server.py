@@ -148,7 +148,4 @@ if __name__ == "__main__":
     blobHeight = 416
     blobWidth = 416
 
-    frameHeight = 400
-    frameWidth = 720
-
     app.run(host='0.0.0.0', debug=False)

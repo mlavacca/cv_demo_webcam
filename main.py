@@ -37,17 +37,17 @@ def args_parsing():
         input_type = "cam"
         
     if args.host:
-        hostname = "http://" + args.host + ":5000"
-    else:
-        hostname = "http://localhost:5000/processframe"
+        edgehost = args.host
+    
+    localhost = "http://localhost:5000/processframe"
 
-    return input_type, input_path, hostname
+    return input_type, input_path, localhost, edgehost
 
 @app.route("/original_video_feed")
 def original_video_feed():
 
     return Response(
-        src_streamer.stream_src_frame(),
+        streamer.stream_src_frame(),
         mimetype = "multipart/x-mixed-replace; boundary=frame"
     )
 
@@ -55,7 +55,14 @@ def original_video_feed():
 @app.route("/localhost_video_feed")
 def localhost_video_feed():
     return Response(
-        src_streamer.stream_remote_frame(src_streamer.host),
+        streamer.stream_remote_frame(streamer.localhost),
+        mimetype = "multipart/x-mixed-replace; boundary=frame"
+    )
+
+@app.route("/edgehost_video_feed")
+def edgehost_video_feed():
+    return Response(
+        streamer.stream_remote_frame(streamer.edgehost),
         mimetype = "multipart/x-mixed-replace; boundary=frame"
     )
 
@@ -65,13 +72,13 @@ def index():
 
 
 if __name__ == "__main__":
-    input_type, input_path, host = args_parsing()
+    input_type, input_path, localhost, edgehost = args_parsing()
 
     frames_collections = Frames_coll()
-    frames_collections.add_output_queue(host)
+    frames_collections.add_output_queue(localhost)
+    frames_collections.add_output_queue(edgehost)
 
-    src_streamer = Streamer(host, input_type, input_path, frames_collections)
-    src_streamer.start_frames_getter()
+    streamer = Streamer(localhost, edgehost, input_type, input_path, frames_collections)
+    streamer.start_frames_getter()
 
-
-    app.run(host='0.0.0.0', port=5005, debug=False)
+    app.run(host='0.0.0.0', port=5005, debug=True)
