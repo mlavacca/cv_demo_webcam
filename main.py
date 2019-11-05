@@ -20,7 +20,6 @@ app = Flask(__name__, template_folder='templates')
 app.secret_key = "secret_key"
 
 def args_parsing():
-
     parser = argparse.ArgumentParser(description='Object Detection using YOLO in OPENCV')
     parser.add_argument('--video', help='Path to video file.')
     parser.add_argument('--host', help='Server host')
@@ -38,14 +37,15 @@ def args_parsing():
         
     if args.host:
         edgehost = args.host
+    else:
+        edgehost = None
     
     localhost = "http://localhost:5000/processframe"
-
+    
     return input_type, input_path, localhost, edgehost
 
 @app.route("/original_video_feed")
 def original_video_feed():
-
     return Response(
         streamer.stream_src_frame(),
         mimetype = "multipart/x-mixed-replace; boundary=frame"
@@ -66,7 +66,7 @@ def edgehost_video_feed():
         mimetype = "multipart/x-mixed-replace; boundary=frame"
     )
 
-@app.route("/", methods=['GET'])
+@app.route("/")
 def index(): 
     return render_template('index.html')
 
@@ -81,4 +81,4 @@ if __name__ == "__main__":
     streamer = Streamer(localhost, edgehost, input_type, input_path, frames_collections)
     streamer.start_frames_getter()
 
-    app.run(host='0.0.0.0', port=5005, debug=True)
+    app.run(host='0.0.0.0', port=5005)

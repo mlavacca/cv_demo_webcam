@@ -4,6 +4,7 @@ import time
 import requests
 import numpy as np
 import json
+from flask import request
 from frames import Frames_coll
 
 class Streamer:
@@ -27,6 +28,12 @@ class Streamer:
     
         if type == "cam":
             self.cap = cv.VideoCapture(0)
+
+        # Load names of classes
+        classesFile = "coco.names"
+        self.classes = None
+        with open(classesFile, 'rt') as f:
+            self.classes = f.read().rstrip('\n').split('\n')
 
         print("Streamer initialized")
 
@@ -87,7 +94,7 @@ class Streamer:
                 continue
             
             if self.n_frames % self.ratio == 0:
-                frame = self.compute_frame(frame)
+                frame = self.compute_frame(frame, host)
 
             flag, encoded_img = cv.imencode(".jpg", frame)
 
@@ -98,24 +105,42 @@ class Streamer:
             yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encoded_img) + b'\r\n')
 
 
-    def compute_frame(self, frame):
-        shape = frame.shape
+    def compute_frame(self, frame, host):
+        shape = list(frame.shape)
 
         # create the POST request embedding the frame
-        req = requests.get(url=self.host,
+        req = requests.get(url=host,
                     data=frame.tobytes(),
                     headers={
                         'Content-Type': 'application/octet-stream',
                         'shape': json.dumps(shape)},
                     verify=False)
 
-        recvFrame = np.frombuffer(req.content, dtype='uint8')
+        inferenceTime = float(req.headers.get('inferenceTime'))
+        label = 'Inference time: %.2f ms' % (inferenceTime)
 
-        try:
-            recvFrame = np.reshape(recvFrame, [480, 640, 3])
-        except Exception:
-            print(req.status_code)
-            print(req.text)
+        data = req.json()
+        for stat in data:
+            self.drawPred(frame, stat['class'], stat['confidence'], stat['left'], stat['top'], stat['leftWidth'], stat['topHeight'])
 
-        return recvFrame
-         
+        cv.putText(frame, label, (0, 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+
+        return frame
+
+
+    def drawPred(self, frame, classId, conf, left, top, right, bottom):
+        # Draw a bounding box.
+        cv.rectangle(frame, (left, top), (right, bottom), (255, 178, 50), 3)
+    
+        label = '%.2f' % conf
+        
+        # Get the label for the class name and its confidence
+        if self.classes:
+            assert(classId < len(self.classes))
+            label = '%s:%s' % (self.classes[classId], label)
+
+        #Display the label at the top of the bounding box
+        labelSize, baseLine = cv.getTextSize(label, cv.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+        top = max(top, labelSize[1])
+        cv.rectangle(frame, (left, top - round(1.5*labelSize[1])), (left + round(1.5*labelSize[0]), top + baseLine), (255, 255, 255), cv.FILLED)
+        cv.putText(frame, label, (left, top), cv.FONT_HERSHEY_SIMPLEX, 0.75, (0,0,0), 1) 
