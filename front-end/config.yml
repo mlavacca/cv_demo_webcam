@@ -1,0 +1,14 @@
+ratio: 1
+buffer_size: 1
+original_buffer_size: 5
+objects_names: coco.names
+zones:
+
+  #- name: Localhost
+  #  path: http://localhost:5000/processframe
+
+  - name: "Edge"
+    path: http://130.192.225.63:30727/processframe
+
+  - name: "Google cloud"
+    path: http://34.65.149.249:31532/processframe

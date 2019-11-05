@@ -1,0 +1,6 @@
+configurationFile: yolov3-tiny.cfg
+weightsFile: yolov3-tiny.weights
+confThreshold: 0.5
+nmsThreshold: 0.4
+blobHeight: 416
+blobWidth: 416

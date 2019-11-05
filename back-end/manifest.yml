@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cv-server-config
+data:
+  config.yml: |
+    configurationFile: yolov3-tiny.cfg
+    weightsFile: yolov3-tiny.weights
+    confThreshold: 0.5
+    nmsThreshold: 0.4
+    blobHeight: 416
+    blobWidth: 416
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yolo-server-deployment
+  labels:
+    app.kubernetes.io/name: cv-yolo-server
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cv-yolo-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cv-yolo-server
+    spec:
+      containers:
+      - name: yolo-server-pod 
+        imagePullPolicy: Always
+        image: mlvc/back-end-config
+        name: yolo-server
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/cvconfig
+        ports:
+        - containerPort: 5000
+        resources:
+          requests:
+            memory: "2048Mi"
+            cpu: 7
+          limits:
+            memory: "2048Mi"
+            cpu: 7
+      volumes:
+        - name: config-volume
+          configMap:
+            name: cv-server-config 
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: yolo-server-service
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: cv-yolo-server
+  ports:
+    - protocol: TCP
+      port: 31532
+      targetPort: 5000
