@@ -5,11 +5,11 @@
   <body>
     <h1>Object recognition</h1>
     <div>
-        <img src="{{ url_for('original_video_feed') }}">
+      <img src="{{ url_for('original_video_feed', device='cam0') }}">
     </div>
     <div>
-        <img src="{{ url_for('localhost_video_feed') }}" height="240" width="320">
-        <img src="{{ url_for('edgehost_video_feed') }}" height="240" width="320">
+      <img src="{{ url_for('remote_video_feed', device='cam0', zone='http://localhost:5000/processframe') }}" width="320" height="240">
+      <img src="{{ url_for('remote_video_feed', device='cam0', zone='http://130.192.225.63:32255/processframe') }}" width="320" height="240">
     </div>
   </body>
 </html>
