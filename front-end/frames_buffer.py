@@ -14,15 +14,15 @@ class Ring_buffer:
     def push_frame(self, frame):
         self.data_lock.acquire()
 
-        self.data.insert(self.head, frame)
-        self.head = (self.head + 1) % self.size
+        self.data[self.tail] = copy.copy(frame)
+        self.tail = (self.tail + 1) % self.size
 
         # manage when the tail overtake the head
-        if self.head == self.tail:
+        if self.tail == self.head:
             self.head_over_tail = True
         
-        if self.head_over_tail and self.head > self.tail:
-            self.tail = self.head
+        if self.head_over_tail and self.tail > self.head:
+            self.head = self.tail
 
         self.data_lock.release()
     
@@ -30,8 +30,10 @@ class Ring_buffer:
     def pop_frame(self):
         self.data_lock.acquire()
 
-        frame = self.data.pop(self.tail)
-        self.tail = (self.tail + 1) % self.size
+        frame = self.data[self.head]
+        self.data[self.head] = None
+
+        self.head = (self.head + 1) % self.size
 
         # manage when the tail overtake the head
         if self.head_over_tail:

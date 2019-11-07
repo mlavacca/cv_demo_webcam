@@ -8,10 +8,11 @@ class Remote_zone:
 
     def __init__(self, dest, buffer_size, ratio, names_file):
         self.dest = dest
-        self.frame_bridge = Ring_buffer(buffer_size)
+        self.buffer_size = buffer_size
+        self.frame_bridges = {}
 
         self.ratio = ratio
-        self.n_computed_frame = 0
+        self.n_computed_frames = {}
         
         # last objects handled by the current zone
         self.last_frames = {}
@@ -25,6 +26,16 @@ class Remote_zone:
         with open(names_file, 'rt') as f:
             self.classes = f.read().rstrip('\n').split('\n')
 
+
+    def add_device(self, device):
+        self.frame_bridges[device] = Ring_buffer(self.buffer_size)
+
+        self.last_frames[device] = {}
+        self.last_boxes[device] = {}
+        self.last_rendered_frames[device] = {}
+        self.last_labels[device] = {}
+        self.last_inference_times[device] = {}
+        self.n_computed_frames[device] = 0
 
     # send frame to the remote server
     def send_frame(self, frame, dev):
@@ -45,7 +56,7 @@ class Remote_zone:
     # render the current frame
     def render_frame(self, frame, dev):
 
-        if self.last_boxes is None or self.n_computed_frame % self.ratio == 0:
+        if self.last_boxes[dev] is None or self.n_computed_frames[dev] % self.ratio == 0:
             self.send_frame(frame, dev)
 
         for stat in self.last_boxes[dev]:
@@ -53,30 +64,27 @@ class Remote_zone:
 
         cv.putText(frame, self.last_labels[dev], (0, 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
 
-        self.n_computed_frame += 1
+        self.n_computed_frames[dev] += 1
         
         return frame
 
 
     # push the new frame in the output buffer
     def push_frame(self, frame, device):
-        self.frame_bridge.push_frame({'dev': device, 'frame': frame})
+        self.frame_bridges[device].push_frame(frame)
 
 
     def pop_frame(self, device):
-        return self.frame_bridge.pop_frame()
+        return self.frame_bridges[device].pop_frame()
 
 
-    def get_last_rendered_frame(self):
-        data = self.frame_bridge.pop_frame()
-
-        frame = data['frame']
-        dev = data['dev']
+    def get_last_rendered_frame(self, device):
+        frame = self.frame_bridges[device].pop_frame()
 
         if frame is not None:
-            self.last_rendered_frames[dev] = self.render_frame(frame, dev)
+            self.last_rendered_frames[device] = self.render_frame(frame, device)
         
-        return self.last_rendered_frames[dev]
+        return self.last_rendered_frames[device]
 
 
     # draw the boxes on the frame

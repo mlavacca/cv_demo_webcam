@@ -58,7 +58,7 @@ def post_frame():
         if device not in computing_center.devices:
             computing_center.add_device(device)
 
-        computing_center.distribute_frame(frame, device)
+        computing_center.dispatch_frame(frame, device)
     except Exception as e:
         print(e)
         return "BAD REQUEST", 400

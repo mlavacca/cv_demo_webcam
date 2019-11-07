@@ -18,7 +18,6 @@ class Computing_center:
         self.last_rendered_frames = {}
 
         self.original_frames_locks = {}
-        self.rendered_frames_locks = {}
 
 
     def add_device(self, dev):
@@ -27,8 +26,10 @@ class Computing_center:
         for zone in self.last_rendered_frames.values():
             zone[dev] = None
 
+        for zone in self.zones.values():
+            zone.add_device(dev)
+
         self.original_frames_locks[dev] = t.Lock()
-        self.rendered_frames_locks[dev] = t.Lock()
 
 
     def add_zone(self, zone):
@@ -38,17 +39,13 @@ class Computing_center:
     
     def get_rendered_frame(self, zone, device):
         while True:
-            self.rendered_frames_locks[device].acquire()
 
-            frame = self.zones[zone].get_last_rendered_frame()
+            frame = self.zones[zone].get_last_rendered_frame(device)
             
             if frame is None:
-                self.rendered_frames_locks[device].release() 
                 continue
 
             success, encoded_img = cv.imencode(".jpg", frame)
-
-            self.rendered_frames_locks[device].release()   
 
             if not success:
                 continue
@@ -57,9 +54,9 @@ class Computing_center:
             + bytearray(encoded_img) + b'\r\n')
 
 
-    def distribute_frame(self, frame, device):
+    def dispatch_frame(self, frame, device):
         self.original_frames_locks[device].acquire()
-        self.last_original_frames[device] = copy.copy(frame)
+        self.last_original_frames[device] = frame
         self.original_frames_locks[device].release()
 
         for zone in self.zones.values():
