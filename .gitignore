@@ -1,0 +1,8 @@
+*.weights
+*.names
+*.cfg
+*.avi
+*.mp4
+*.jpg
+*/__pycache__/
+.vscode/
