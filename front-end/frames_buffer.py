@@ -2,13 +2,14 @@ import copy
 import threading as t
 
 class Ring_buffer:
+    
     def __init__(self, size):
         self.data_lock = t.Lock()
         self.data = [None for i in range(size)]
         self.size = size
         self.head = 0
         self.tail = 0
-        self.head_over_tail = False
+        self.tail_over_head = False
 
 
     def push_frame(self, frame):
@@ -17,11 +18,12 @@ class Ring_buffer:
         self.data[self.tail] = copy.copy(frame)
         self.tail = (self.tail + 1) % self.size
 
-        # manage when the tail overtake the head
+        # the tail has just reached the head
         if self.tail == self.head:
-            self.head_over_tail = True
+            self.tail_over_head = True
         
-        if self.head_over_tail and self.tail > self.head:
+        # manage when the tail overtakes the head
+        if self.tail_over_head and self.tail > self.head:
             self.head = self.tail
 
         self.data_lock.release()
@@ -35,9 +37,8 @@ class Ring_buffer:
 
         self.head = (self.head + 1) % self.size
 
-        # manage when the tail overtake the head
-        if self.head_over_tail:
-            self.head_over_tail = False
+        if self.tail_over_head:
+            self.tail_over_head = False
 
         self.data_lock.release()
 

@@ -74,10 +74,12 @@ class Remote_zone:
         self.frame_bridges[device].push_frame(frame)
 
 
+    # pop the first object from the output buffer
     def pop_frame(self, device):
         return self.frame_bridges[device].pop_frame()
 
 
+    # return the last available frame (the current one or a new one ready to be rendered)
     def get_last_rendered_frame(self, device):
         frame = self.frame_bridges[device].pop_frame()
 

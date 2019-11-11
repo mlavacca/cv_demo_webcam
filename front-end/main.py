@@ -37,10 +37,11 @@ def post_frame():
     try:
         r = request.get_data()
         device = request.headers.get('device')
-        shape = request.headers.get('shape')
+        original_shape = request.headers.get('original_shape')
+        resized_shape = request.headers.get('resized_shape')
 
         frame = np.frombuffer(r, dtype='uint8')
-        frame = np.reshape(frame, json.loads(shape))
+        frame = np.reshape(frame, json.loads(resized_shape))
 
         if device not in computing_center.devices:
             computing_center.add_device(device)
