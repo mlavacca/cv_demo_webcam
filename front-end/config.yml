@@ -1,6 +1,6 @@
 ratio: 5
 buffer_size: 5
-objects_names: front-end/coco.names
+objects_names: coco.names
 zones:
   - path: http://localhost:5000/processframe
 

@@ -9,9 +9,12 @@ import json
 from flask import Flask , session, redirect, request, Response
 from pprint import pprint
 from datetime import datetime
+import threading as t
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
+
+
 
 @app.route("/processframe", methods=['GET'])
 def processFrame():
@@ -27,6 +30,8 @@ def processFrame():
     frame = np.reshape(frame, json.loads(shape)) 
     
     try:
+        cv_lock.acquire()
+        
         # Create a 4D blob from a frame.
         blob = cv.dnn.blobFromImage(frame, 1/255, (blobWidth, blobHeight), [0,0,0], 1, crop=False)
 
@@ -43,7 +48,9 @@ def processFrame():
         t, _ = net.getPerfProfile()
         inferenceTime = t * 1000.0 / cv.getTickFrequency()
 
-    except Exception:
+        cv_lock.release()
+    except Exception as e:
+        raise(e)
         print("Malformed input")
         return "Malformed input", 400
     
@@ -122,4 +129,6 @@ if __name__ == "__main__":
     blobHeight = 416
     blobWidth = 416
 
-    app.run(host='0.0.0.0', debug=False)
+    cv_lock = t.Lock()
+
+    app.run(host='0.0.0.0', debug=True)

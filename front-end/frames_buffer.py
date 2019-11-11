@@ -15,7 +15,7 @@ class Ring_buffer:
     def push_frame(self, frame):
         self.data_lock.acquire()
 
-        self.data[self.tail] = copy.copy(frame)
+        self.data[self.tail] = copy.deepcopy(frame)
         self.tail = (self.tail + 1) % self.size
 
         # the tail has just reached the head

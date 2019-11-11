@@ -56,7 +56,7 @@ class Computing_center:
 
     def dispatch_frame(self, frame, device):
         self.original_frames_locks[device].acquire()
-        self.last_original_frames[device] = frame
+        self.last_original_frames[device] = copy.deepcopy(frame)
         self.original_frames_locks[device].release()
 
         for zone in self.zones.values():
