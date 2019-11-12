@@ -13,7 +13,7 @@ import yaml
 
 from computing_center import Computing_center
 
-app = Flask(__name__, template_folder='../templates')
+app = Flask(__name__, template_folder='templates')
 app.secret_key = "secret_key"
 
 
@@ -77,7 +77,9 @@ def remote_video_feed():
 
 @app.route("/")
 def index(): 
-    return render_template('index.html')
+    return render_template('index.html', 
+            devices=computing_center.get_devices(),
+            zones=computing_center.get_zones())
 
 
 if __name__ == "__main__":
@@ -88,7 +90,7 @@ if __name__ == "__main__":
     buffer = conf_file.read()
     conf = yaml.load(buffer)
 
-    computing_center = Computing_center(conf['buffer_size'], conf['ratio'], conf['objects_names'])
+    computing_center = Computing_center(conf['buffer_size'], conf['original_buffer_size'], conf['ratio'], conf['objects_names'])
 
     for zone in conf['zones']:
         computing_center.add_zone(zone['path'])

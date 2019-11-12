@@ -14,8 +14,6 @@ import threading as t
 app = Flask(__name__)
 app.secret_key = "secret_key"
 
-
-
 @app.route("/processframe", methods=['GET'])
 def processFrame():
     before = datetime.now()
@@ -117,8 +115,8 @@ if __name__ == "__main__":
     confThreshold = 0.5 #Confidence threshold
     nmsThreshold = 0.4 #Non-maximum suppression threshold
 
-    modelConfiguration = "yolov3.cfg"
-    modelWeights = "yolov3.weights"
+    modelConfiguration = "yolov3-tiny.cfg"
+    modelWeights = "yolov3-tiny.weights"
  
     net = cv.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
     net.setPreferableBackend(cv.dnn.DNN_BACKEND_OPENCV)

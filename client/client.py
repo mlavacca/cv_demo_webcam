@@ -4,7 +4,7 @@ import json
 import time
 
 def main():
-    host = "http://localhost:5005/post_frame"
+    host = "http://debian-demo.local:5005/post_frame"
 
     cap = cv.VideoCapture(0)
 
@@ -49,10 +49,9 @@ def main():
                 'device': device
                 },
                 verify=False)
-        except Exception as e:
-            print(e)
+        except Exception:
             print("Server connection closed")
-            exit(-1)
+            time.sleep(2)
 
         hasFrame, frame = cap.read()
         
