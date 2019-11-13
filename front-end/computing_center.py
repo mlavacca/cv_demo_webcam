@@ -21,6 +21,8 @@ class Computing_center:
 
         self.original_frames_locks = {}
 
+        self.img = None
+
 
     def add_device(self, dev):
         self.devices.append(dev)
@@ -41,11 +43,11 @@ class Computing_center:
 
 
     def get_zones(self):
-        return self.zones
+        return self.zones.keys()
 
 
-    def add_zone(self, zone):
-        self.zones[zone] = Remote_zone(zone, self.buffer_size, self.ratio, self.names_file)
+    def add_zone(self, name, zone):
+        self.zones[name] = Remote_zone(name, zone, self.buffer_size, self.ratio, self.names_file)
         self.last_rendered_frames[zone] = {}
     
     
@@ -68,7 +70,8 @@ class Computing_center:
 
     def dispatch_frame(self, frame, device):
         self.original_frames_locks[device].acquire()
-        self.last_original_frames_buffers[device].push_frame(frame)
+        #self.last_original_frames_buffers[device].push_frame(frame)
+        self.img = frame
         self.original_frames_locks[device].release()
 
         for zone in self.zones.values():
@@ -79,7 +82,8 @@ class Computing_center:
         while True:
             self.original_frames_locks[device].acquire()
             
-            frame = self.last_original_frames_buffers[device].pop_frame()
+            #frame = self.last_original_frames_buffers[device].pop_frame()
+            frame = self.img
 
             if frame is None:
                 self.original_frames_locks[device].release()

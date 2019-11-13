@@ -77,9 +77,11 @@ def remote_video_feed():
 
 @app.route("/")
 def index(): 
+
     return render_template('index.html', 
             devices=computing_center.get_devices(),
-            zones=computing_center.get_zones())
+            zones=computing_center.get_zones()
+    )
 
 
 if __name__ == "__main__":
@@ -93,6 +95,6 @@ if __name__ == "__main__":
     computing_center = Computing_center(conf['buffer_size'], conf['original_buffer_size'], conf['ratio'], conf['objects_names'])
 
     for zone in conf['zones']:
-        computing_center.add_zone(zone['path'])
+        computing_center.add_zone(zone['name'], zone['path'])
 
     app.run(host='0.0.0.0', port=5005)

@@ -1,10 +1,12 @@
+#!/usr/bin/python3.7
+
 import cv2 as cv
 import requests
 import json
 import time
 
 def main():
-    host = "http://debian-demo.local:5005/post_frame"
+    host = "http://192.168.2.175:5005/post_frame"
 
     cap = cv.VideoCapture(0)
 
@@ -43,6 +45,7 @@ def main():
                 url=host,
                 data=frame.tobytes(),
                 headers={
+                'Connection': 'Keep-Alive',
                 'Content-Type': 'application/octet-stream',
                 'original_shape': json.dumps(shape),
                 'resized_shape': json.dumps(newShape),

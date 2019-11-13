@@ -6,7 +6,8 @@ from frames_buffer import Ring_buffer
 
 class Remote_zone:
 
-    def __init__(self, dest, buffer_size, ratio, names_file):
+    def __init__(self, name, dest, buffer_size, ratio, names_file):
+        self.name = name
         self.dest = dest
         self.buffer_size = buffer_size
         self.frame_bridges = {}
@@ -44,6 +45,7 @@ class Remote_zone:
         req = requests.get(url=self.dest,
                     data=frame.tobytes(),
                     headers={
+                        'Connection': 'Keep-Alive',
                         'Content-Type': 'application/octet-stream',
                         'shape': json.dumps(shape)},
                     verify=False)

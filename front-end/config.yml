@@ -3,6 +3,8 @@ buffer_size: 5
 original_buffer_size: 20
 objects_names: coco.names
 zones:
-  - path: http://localhost:5000/processframe
+  - name: localhost
+    path: http://localhost:5000/processframe
 
-  - path: http://130.192.225.63:32255/processframe
+  - name: edge
+    path: http://130.192.225.63:32251/processframe

@@ -10,6 +10,7 @@ from flask import Flask , session, redirect, request, Response
 from pprint import pprint
 from datetime import datetime
 import threading as t
+import yaml
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
@@ -112,20 +113,28 @@ def postprocess(frame, outs):
 
 
 if __name__ == "__main__":
-    confThreshold = 0.5 #Confidence threshold
-    nmsThreshold = 0.4 #Non-maximum suppression threshold
+    config_file = "/etc/cvconfig/config.yml"
 
-    modelConfiguration = "yolov3-tiny.cfg"
-    modelWeights = "yolov3-tiny.weights"
+    if not os.path.isfile(config_file):
+        print("Error, config file not found")
+        exit(-1)
+
+    conf_file = open(config_file, "r")
+    buffer = conf_file.read()
+    conf = yaml.load(buffer)
+
+    modelConfiguration = conf['configurationFile']
+    modelWeights = conf['weightsFile']
+    confThreshold = conf['confThreshold']
+    nmsThreshold = conf['confThreshold']
+    blobHeight = conf['blobHeight']
+    blobWidth = conf['blobWidth']
  
     net = cv.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
     net.setPreferableBackend(cv.dnn.DNN_BACKEND_OPENCV)
     net.setPreferableTarget(cv.dnn.DNN_TARGET_CPU)
 
     dType = 'uint8'
-
-    blobHeight = 416
-    blobWidth = 416
 
     cv_lock = t.Lock()
 
