@@ -1,9 +1,9 @@
 import cv2 as cv
 import threading as t
 import copy
+import time
 from remote_zone import Remote_zone
 from frames_buffer import Ring_buffer
-import time
 
 
 class Computing_center:

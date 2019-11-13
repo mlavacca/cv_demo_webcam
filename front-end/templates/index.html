@@ -17,8 +17,9 @@
                 <tr>
                   <th scope="col">Cam Id</th>
                   <th scope="col">Original stream</th>
-                  <th scope="col">Localhost</th>
-                  <th scope="col">Edge</th>
+                  {%for zone in zones%}
+                    <th scope="col">{{zone}}</th>
+                  {%endfor%}
                 </tr>
               </thead>
               <tbody>

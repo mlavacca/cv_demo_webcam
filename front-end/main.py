@@ -10,6 +10,7 @@ import json
 from flask import Flask, Response, render_template, request
 import threading as t
 import yaml
+import time
 
 from computing_center import Computing_center
 
@@ -20,7 +21,7 @@ app.secret_key = "secret_key"
 # args parsing for configuration file
 def args_parsing():
     parser = argparse.ArgumentParser(description='Middle point that acts as frame aggregator and dispatcher')
-    parser.add_argument('-f', '--file', default="config.yml" , help='Path to configuration file')
+    parser.add_argument('-f', '--file', default="/etc/config.yml" , help='Path to configuration file')
     args = parser.parse_args()
         
     if args.file:
@@ -34,10 +35,11 @@ def args_parsing():
 
 @app.route("/post_frame", methods=['POST'])
 def post_frame():
+    start = time.time() * 1000
+
     try:
         r = request.get_data()
         device = request.headers.get('device')
-        original_shape = request.headers.get('original_shape')
         resized_shape = request.headers.get('resized_shape')
 
         frame = np.frombuffer(r, dtype='uint8')
@@ -51,6 +53,8 @@ def post_frame():
         print(e)
         return "BAD REQUEST", 400
     
+    req_time = (time.time() * 1000) - start
+    print("%.2f" % (req_time))
     return "OK", 200
 
 
@@ -94,7 +98,8 @@ if __name__ == "__main__":
 
     computing_center = Computing_center(conf['buffer_size'], conf['original_buffer_size'], conf['ratio'], conf['objects_names'])
 
-    for zone in conf['zones']:
-        computing_center.add_zone(zone['name'], zone['path'])
+    if conf['zones'] is not None:
+        for zone in conf['zones']:
+            computing_center.add_zone(zone['name'], zone['path'])
 
     app.run(host='0.0.0.0', port=5005)

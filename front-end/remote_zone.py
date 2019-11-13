@@ -1,6 +1,7 @@
 import requests
 import json
 import cv2 as cv
+import time
 from frames_buffer import Ring_buffer
 
 
@@ -57,6 +58,7 @@ class Remote_zone:
 
     # render the current frame
     def render_frame(self, frame, dev):
+        start = time.time() * 1000
 
         if self.last_boxes[dev] is None or self.n_computed_frames[dev] % self.ratio == 0:
             self.send_frame(frame, dev)
@@ -68,6 +70,8 @@ class Remote_zone:
 
         self.n_computed_frames[dev] += 1
         
+        req_time = (time.time() * 1000) - start
+        cv.putText(frame, "requested time: %.2f ms" % (req_time), (0, 30), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
         return frame
 
 
