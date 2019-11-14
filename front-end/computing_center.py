@@ -2,8 +2,35 @@ import cv2 as cv
 import threading as t
 import copy
 import time
+import numpy as np
+import queue
+import json
 from remote_zone import Remote_zone
 from frames_buffer import Ring_buffer
+
+
+def dispatcher_thread(computing_center, device):
+        previous_frame = None
+
+        while(True):
+
+            req = computing_center.get_frame_to_dispatched(device)
+
+            if req is None or req == previous_frame:
+                continue
+            
+            previous_frame = req
+
+            raw_frame = req['raw_frame']
+            resized_shape = req['resized_shape']
+
+            frame = np.frombuffer(raw_frame, dtype='uint8')
+            frame = np.reshape(frame, json.loads(resized_shape))
+
+            computing_center.push_new_input_frame(device, frame)
+            computing_center.dispatch_frame(frame, device)
+
+        pass
 
 
 class Computing_center:
@@ -15,12 +42,36 @@ class Computing_center:
         self.names_file = names_file
         self.zones = {}
         self.devices = []
+        self.thread_devices = {}
+        self.input_queues = {}
 
         self.last_original_frames_buffers = {}
         self.last_rendered_frames = {}
 
         self.original_frames_locks = {}
 
+        self.frames_to_be_dispatched = {}
+        self.frames_to_be_dispatched_lock = t.Lock()
+
+
+    def set_frame_to_be_dispatched(self, device, frame):
+        self.frames_to_be_dispatched_lock.acquire()
+
+        self.frames_to_be_dispatched[device] = frame
+
+        self.frames_to_be_dispatched_lock.release()
+
+    def get_frame_to_dispatched(self, device):
+        self.frames_to_be_dispatched_lock.acquire()
+
+        try:
+            frame = copy.deepcopy(self.frames_to_be_dispatched[device])
+        except KeyError:
+            frame = None
+
+        self.frames_to_be_dispatched_lock.release()
+
+        return frame
 
     def add_device(self, dev):
         self.devices.append(dev)
@@ -33,6 +84,21 @@ class Computing_center:
 
         self.last_original_frames_buffers[dev] = Ring_buffer(self.original_buffer_size)
         self.original_frames_locks[dev] = t.Lock()
+
+        self.input_queues[dev] = Ring_buffer(self.original_buffer_size)
+        self.thread_devices[dev] = t.Thread(target = dispatcher_thread, args=(self, dev))
+        self.thread_devices[dev].start()
+
+
+    def push_new_input_frame(self, device, frame):
+        success, encoded_img = cv.imencode(".jpg", frame)
+
+        if not success:
+            return
+
+        self.original_frames_locks[device].acquire()
+        self.last_original_frames_buffers[device].push_frame(encoded_img)
+        self.original_frames_locks[device].release()
 
 
     def get_devices(self):
@@ -67,33 +133,20 @@ class Computing_center:
 
 
     def dispatch_frame(self, frame, device):
-        self.original_frames_locks[device].acquire()
-        self.last_original_frames_buffers[device].push_frame(frame)
-        self.original_frames_locks[device].release()
-
         for zone in self.zones.values():
             zone.push_frame(frame, device)
 
 
     def get_original_frame(self, device):
         while True:
-            self.original_frames_locks[device].acquire()
             
             frame = self.last_original_frames_buffers[device].pop_frame()
 
             if frame is None:
-                self.original_frames_locks[device].release()
                 continue
-            
-            success, encoded_img = cv.imencode(".jpg", frame)
-
-            self.original_frames_locks[device].release()
-
-            if not success:
-                continue
-
+           
             yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' 
-            + bytearray(encoded_img) + b'\r\n')
+            + bytearray(frame) + b'\r\n')
 
                     
 

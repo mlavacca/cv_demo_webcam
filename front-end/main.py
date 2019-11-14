@@ -2,7 +2,6 @@
 
 import argparse
 import sys
-import numpy as np
 import os.path
 import requests
 import http
@@ -11,6 +10,7 @@ from flask import Flask, Response, render_template, request
 import threading as t
 import yaml
 import time
+import queue
 
 from computing_center import Computing_center
 
@@ -35,26 +35,22 @@ def args_parsing():
 
 @app.route("/post_frame", methods=['POST'])
 def post_frame():
-    start = time.time() * 1000
 
     try:
-        r = request.get_data()
+        req = {}
         device = request.headers.get('device')
-        resized_shape = request.headers.get('resized_shape')
-
-        frame = np.frombuffer(r, dtype='uint8')
-        frame = np.reshape(frame, json.loads(resized_shape))
+        req['raw_frame'] = request.get_data()
+        req['resized_shape'] = request.headers.get('resized_shape')
 
         if device not in computing_center.devices:
             computing_center.add_device(device)
-
-        computing_center.dispatch_frame(frame, device)
+        
+        
+        computing_center.set_frame_to_be_dispatched(device, req)
     except Exception as e:
         print(e)
         return "BAD REQUEST", 400
-    
-    req_time = (time.time() * 1000) - start
-    print("%.2f" % (req_time))
+      
     return "OK", 200
 
 
@@ -102,4 +98,4 @@ if __name__ == "__main__":
         for zone in conf['zones']:
             computing_center.add_zone(zone['name'], zone['path'])
 
-    app.run(host='0.0.0.0', port=5005)
+    app.run(threaded=True, host='0.0.0.0', port=5005)

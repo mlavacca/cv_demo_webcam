@@ -44,3 +44,11 @@ class Ring_buffer:
 
         return frame
 
+    def get_last_frame(self):
+        self.data_lock.acquire()
+
+        frame = self.data[self.head]
+
+        self.data_lock.release()
+
+        return frame

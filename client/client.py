@@ -6,11 +6,11 @@ import json
 import time
 
 def main():
-    host = "http://192.168.2.175:5005/post_frame"
+    host = "http://192.168.0.36:5005/post_frame"
 
     cap = cv.VideoCapture(0)
 
-    device = "cam1" 
+    device = "cam0" 
     newSize = 416
 
     hasFrame, frame = cap.read()

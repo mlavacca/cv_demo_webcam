@@ -42,7 +42,8 @@ class Remote_zone:
     # send frame to the remote server
     def send_frame(self, frame, dev):
         shape = list(frame.shape)
-
+        
+        start = time.time() * 1000
         req = requests.get(url=self.dest,
                     data=frame.tobytes(),
                     headers={
@@ -50,18 +51,22 @@ class Remote_zone:
                         'Content-Type': 'application/octet-stream',
                         'shape': json.dumps(shape)},
                     verify=False)
+        req_time = (time.time() * 1000) - start
 
         self.last_boxes[dev] = req.json()
         self.last_inference_times[dev] = float(req.headers.get('inferenceTime'))
         self.last_labels[dev] = 'Inference time: %.2f ms' % (self.last_inference_times[dev])
+        return req_time
 
 
     # render the current frame
     def render_frame(self, frame, dev):
-        start = time.time() * 1000
+        
+        req_time = 0
 
         if self.last_boxes[dev] is None or self.n_computed_frames[dev] % self.ratio == 0:
-            self.send_frame(frame, dev)
+            req_time = self.send_frame(frame, dev)
+        
 
         for stat in self.last_boxes[dev]:
             self.drawPred(frame, stat['class'], stat['confidence'], stat['left'], stat['top'], stat['leftWidth'], stat['topHeight'])
@@ -70,7 +75,7 @@ class Remote_zone:
 
         self.n_computed_frames[dev] += 1
         
-        req_time = (time.time() * 1000) - start
+        
         cv.putText(frame, "requested time: %.2f ms" % (req_time), (0, 30), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
         return frame
 

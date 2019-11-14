@@ -1,10 +1,14 @@
 ratio: 1
-buffer_size: 50
+buffer_size: 1
 original_buffer_size: 5
 objects_names: coco.names
 zones:
-  - name: Casa
-    path: http://localhost:5000/processframe
+  #- name: Localhost
+  #  path: http://localhost:5000/processframe
 
-  - name: Politecnico
+  - name: Edge
     path: http://130.192.225.63:32251/processframe
+
+  - name: Cloud
+    path: http://167.172.180.244:31279/processframe
+
